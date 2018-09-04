@@ -1,4 +1,4 @@
-package io.fourfinanceit.app.model;
+package io.fourfinanceit.app.model.forms;
 
 public class UserLoginForm {
     private String nationalIdentityNumber;

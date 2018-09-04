@@ -3,6 +3,8 @@ package io.fourfinanceit.app.service;
 import io.fourfinanceit.app.model.*;
 import io.fourfinanceit.app.model.domain.ExtendedLoan;
 import io.fourfinanceit.app.model.domain.Loan;
+import io.fourfinanceit.app.model.forms.ExtendLoanForm;
+import io.fourfinanceit.app.model.forms.NewLoanForm;
 import io.fourfinanceit.app.repository.ExtendedLoanRepository;
 import io.fourfinanceit.app.repository.LoanRepository;
 import io.fourfinanceit.app.utils.MyAppConstants;
@@ -25,10 +27,10 @@ import static java.time.temporal.ChronoUnit.DAYS;
 public class LoanService {
 
     @Autowired
-    LoanRepository loanRepository;
+    private LoanRepository loanRepository;
 
     @Autowired
-    ExtendedLoanRepository extendedLoanRepository;
+    private ExtendedLoanRepository extendedLoanRepository;
 
     public Optional<Loan> findLoan(Long id) {
         return loanRepository.findById(id);
@@ -50,22 +52,18 @@ public class LoanService {
         extendedLoanRepository.changeExtendedLoanStatus(loanId, MyAppConstants.STATUS_APPROVED);
     }
 
-    public Optional<Loan> getLoanByIdWithoutClosedLoans(Long userId) {
-        return loanRepository.findLoanByIdAndStatusNot(userId, MyAppConstants.STATUS_CLOSED);
+    public Optional<Loan> getLoanByIdWithoutClosedLoans(Long loanId) {
+        return loanRepository.findLoanByIdAndStatusNot(loanId, MyAppConstants.STATUS_CLOSED);
     }
 
     public List<Loan> getLoansByUserIdWithoutClosedLoans(Long userId) {
         return loanRepository.findLoansByUserIdAndStatusNot(userId, MyAppConstants.STATUS_CLOSED);
     }
 
-    public Optional<LoanInfo> getOptionalLoanInfoForUser(Long userId) {
-        Optional<Loan> loan = getLoanByIdWithoutClosedLoans(userId);
+    public Optional<LoanInfo> getLoanInfo(Long loanId) {
+        Optional<Loan> optionalLoan = getLoanByIdWithoutClosedLoans(loanId);
 
-        if (!loan.isPresent()) {
-            return Optional.empty();
-        } else {
-            return Optional.ofNullable(getLoanInfo(loan.get()));
-        }
+        return optionalLoan.map(this::getLoanInfo);
     }
 
     public List<LoanInfo> getInformationAboutUserLoans(Long userId) {
@@ -80,6 +78,14 @@ public class LoanService {
         loanInfo.setLoanStartDate(loan.getLoanStartDate());
         loanInfo.setLoanEndDate(loan.getLoanEndDate());
         loanInfo.setLoanAmount(loan.getLoanAmount());
+        loanInfo.setInterestAmount(
+                calculateLoanInterestToReturn(
+                        loan.getInterestFactor(),
+                        loan.getLoanAmount(),
+                        loan.getLoanStartDate(),
+                        loan.getLoanEndDate()
+                )
+        );
         loanInfo.setTotalInterestAmount(
                 calculateLoanInterestToReturn(
                         loan.getInterestFactor(),
@@ -95,7 +101,7 @@ public class LoanService {
         Optional.ofNullable(loan.getExtendedLoan()).ifPresent(extendedLoan -> {
             ExtendedLoanInfo extendedLoanInfo = new ExtendedLoanInfo();
             extendedLoanInfo.setLoanEndDate(extendedLoan.getLoanEndDate());
-            extendedLoanInfo.setTotalInterestAmount(
+            extendedLoanInfo.setInterestAmount(
                     calculateLoanInterestToReturn(
                             extendedLoan.getInterestFactor(),
                             loan.getLoanAmount(),
@@ -105,9 +111,9 @@ public class LoanService {
             );
             extendedLoanInfo.setStatus(extendedLoan.getStatus());
             loanInfo.setExtendedLoanInfo(extendedLoanInfo);
-            if (loan.getExtendedLoan() != null &&
-                    !loan.getExtendedLoan().getStatus().equals(MyAppConstants.STATUS_WAITING_FOR_APPROVAL)) {
-                loanInfo.setAmountToReturn(loanInfo.getAmountToReturn() + extendedLoanInfo.getTotalInterestAmount());
+            if (!loan.getExtendedLoan().getStatus().equals(MyAppConstants.STATUS_WAITING_FOR_APPROVAL)) {
+                loanInfo.setAmountToReturn(loanInfo.getAmountToReturn() + extendedLoanInfo.getInterestAmount());
+                loanInfo.setTotalInterestAmount(loanInfo.getTotalInterestAmount() + extendedLoanInfo.getInterestAmount());
             }
         });
 
@@ -121,14 +127,15 @@ public class LoanService {
 
         overdueDays.ifPresent(overdue -> {
             OverdueLoanInfo overdueLoanInfo = new OverdueLoanInfo();
-            overdueLoanInfo.setTotalInterestAmount(calculateLoanInterestToReturn(
+            overdueLoanInfo.setInterestAmount(calculateLoanInterestToReturn(
                     MyAppConstants.OVERDUE_INTEREST_FACTOR,
                     loanInfo.getLoanAmount(),
                     Double.valueOf(overdueDays.get())));
             overdueLoanInfo.setOverdueDays(overdueDays.get());
             loanInfo.setAmountToReturn(
                     loanInfo.getAmountToReturn() +
-                            overdueLoanInfo.getTotalInterestAmount());
+                            overdueLoanInfo.getInterestAmount());
+            loanInfo.setTotalInterestAmount(loanInfo.getTotalInterestAmount() + overdueLoanInfo.getInterestAmount());
             loanInfo.setOverdueLoanInfo(overdueLoanInfo);
         });
 
@@ -159,15 +166,15 @@ public class LoanService {
     }
 
     public void createLoan(NewLoanForm newLoanForm) {
-        Calendar calendar = Calendar.getInstance();
-        Date loanStartDate = calendar.getTime();
-        calendar.add(Calendar.DAY_OF_MONTH, newLoanForm.getTermInDays());
-        Date loanEndDate = calendar.getTime();
+        LocalDate loanStartDate = LocalDate.now();
+
+        LocalDate loanEndDate = loanStartDate
+                .plusDays(newLoanForm.getTermInDays());
 
         Loan loan = new Loan(
                 newLoanForm.getUserId(),
-                loanStartDate,
-                loanEndDate,
+                localDateToDate(loanStartDate),
+                localDateToDate(loanEndDate),
                 MyAppConstants.STANDARD_INTEREST_FACTOR,
                 newLoanForm.getAmount(),
                 0d,
@@ -183,8 +190,8 @@ public class LoanService {
             Date startDate,
             Date endDate) {
 
-        LocalDate start = Instant.ofEpochMilli(startDate.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate end = Instant.ofEpochMilli(endDate.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate start = dateToLocalDate(startDate);
+        LocalDate end = dateToLocalDate(endDate);
 
         Double termInDays = (double) DAYS.between(start, end);
 
@@ -198,8 +205,8 @@ public class LoanService {
         return interestFactor * termInDays * loanAmount / 100;
     }
 
-    private Optional<Integer> returnDaysOverdueIfPresent(Date loanEndDate) {
-        LocalDate end = Instant.ofEpochMilli(loanEndDate.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
+    public Optional<Integer> returnDaysOverdueIfPresent(Date loanEndDate) {
+        LocalDate end = dateToLocalDate(loanEndDate);
         Long daysAfterLoanEndDate = DAYS.between(end, LocalDate.now());
         if (daysAfterLoanEndDate > 0) {
             return Optional.of(daysAfterLoanEndDate.intValue());
@@ -208,8 +215,16 @@ public class LoanService {
         }
     }
 
-    public boolean between(int value, int minValueInclusive, int maxValueInclusive) {
-        return (value >= minValueInclusive && value <= maxValueInclusive);
+    public boolean isNumberBetween(int value, int minValueInclusive, int maxValueInclusive) {
+        return (value >= minValueInclusive) && (value <= maxValueInclusive);
+    }
+
+    private Date localDateToDate(LocalDate date) {
+        return Date.from(date.atStartOfDay(ZoneId.systemDefault()).toInstant());
+    }
+
+    private LocalDate dateToLocalDate(Date date) {
+        return Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
 }

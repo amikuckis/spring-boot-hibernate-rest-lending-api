@@ -1,4 +1,4 @@
-package io.fourfinanceit.app.model;
+package io.fourfinanceit.app.model.forms;
 
 import io.fourfinanceit.app.utils.MyAppConstants;
 
@@ -6,18 +6,25 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.Positive;
 
-public class NewLoanForm {
+public class ExtendLoanForm {
+
+    @Positive
+    private Long loanToExtendId;
 
     @Positive
     private Long userId;
 
     @Min(10)
-    @Max(MyAppConstants.MAX_LOAN_TERM_IN_DAYS)
+    @Max(MyAppConstants.MAX_LOAN_EXTEND_TERM_IN_DAYS)
     private Integer termInDays;
 
-    @Min(10)
-    @Max(MyAppConstants.MAX_LOAN_AMOUNT)
-    private Double amount;
+    public Long getLoanToExtendId() {
+        return loanToExtendId;
+    }
+
+    public void setLoanToExtendId(Long loanToExtendId) {
+        this.loanToExtendId = loanToExtendId;
+    }
 
     public Long getUserId() {
         return userId;
@@ -34,13 +41,4 @@ public class NewLoanForm {
     public void setTermInDays(Integer termInDays) {
         this.termInDays = termInDays;
     }
-
-    public Double getAmount() {
-        return amount;
-    }
-
-    public void setAmount(Double amount) {
-        this.amount = amount;
-    }
 }
-

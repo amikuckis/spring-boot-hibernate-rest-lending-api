@@ -4,7 +4,7 @@ public class OverdueLoanInfo {
 
     private Integer overdueDays;
 
-    private Double totalInterestAmount;
+    private Double interestAmount;
 
     public Integer getOverdueDays() {
         return overdueDays;
@@ -14,11 +14,11 @@ public class OverdueLoanInfo {
         this.overdueDays = overdueDays;
     }
 
-    public Double getTotalInterestAmount() {
-        return totalInterestAmount;
+    public Double getInterestAmount() {
+        return interestAmount;
     }
 
-    public void setTotalInterestAmount(Double totalInterestAmount) {
-        this.totalInterestAmount = totalInterestAmount;
+    public void setInterestAmount(Double interestAmount) {
+        this.interestAmount = interestAmount;
     }
 }

@@ -1,10 +1,10 @@
 package io.fourfinanceit.app.controller;
 
 import io.fourfinanceit.app.exception.*;
-import io.fourfinanceit.app.model.ExtendLoanForm;
+import io.fourfinanceit.app.model.forms.ExtendLoanForm;
 import io.fourfinanceit.app.model.LoanInfo;
-import io.fourfinanceit.app.model.NewLoanForm;
-import io.fourfinanceit.app.model.ReturnLoanAmountForm;
+import io.fourfinanceit.app.model.forms.NewLoanForm;
+import io.fourfinanceit.app.model.forms.ReturnLoanAmountForm;
 import io.fourfinanceit.app.model.domain.Loan;
 import io.fourfinanceit.app.service.LoanService;
 import io.fourfinanceit.app.service.LoggedRemoteAddressOfRequestService;
@@ -31,18 +31,19 @@ public class LoanController {
     private static final String CREATE_LOAN_REQUEST_NAME = "CREATE_LOAN";
     private static final String RESOURCE_NAME_USER = "User";
     private static final String RESOURCE_NAME_LOAN = "Loan";
+    private static final String RESOURCE_NAME_EXTENDED_LOAN = "Extended Loan";
 
     private static final int REMOTE_ADDRESS_CHECK_PERIOD = 24 * 60 * 1000;
     private static final int ENDPOINT_REQUEST_LIMIT_FOR_REMOTE_ADDRESS = 3;
 
     @Autowired
-    LoanService loanService;
+    private LoanService loanService;
 
     @Autowired
-    UserService userService;
+    private UserService userService;
 
     @Autowired
-    LoggedRemoteAddressOfRequestService remoteAddressService;
+    private LoggedRemoteAddressOfRequestService remoteAddressService;
 
     @RequestMapping(
             value = "/approve/{loanId}",
@@ -74,7 +75,7 @@ public class LoanController {
         }
 
         if (mainLoan.get().getExtendedLoan() == null) {
-            throw new ResourceNotFoundException("Extended Loan");
+            throw new ResourceNotFoundException(RESOURCE_NAME_EXTENDED_LOAN);
         }
 
         if (!mainLoan.get().getExtendedLoan().getStatus().equals(MyAppConstants.STATUS_WAITING_FOR_APPROVAL)) {
@@ -91,7 +92,7 @@ public class LoanController {
             consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity returnLoanAmount(@RequestBody ReturnLoanAmountForm returnLoanAmountForm) {
 
-        Optional<LoanInfo> optionalLoanInfo = loanService.getOptionalLoanInfoForUser(returnLoanAmountForm.getLoanId());
+        Optional<LoanInfo> optionalLoanInfo = loanService.getLoanInfo(returnLoanAmountForm.getLoanId());
 
         if (!optionalLoanInfo.isPresent()) {
             throw new ResourceNotFoundException(RESOURCE_NAME_LOAN);
@@ -126,7 +127,7 @@ public class LoanController {
     public Loan getLoan(@PathVariable("loanId") Long loanId) {
 
         return loanService.findLoan(loanId)
-                .orElseThrow(() -> new ResourceNotFoundException("loan"));
+                .orElseThrow(() -> new ResourceNotFoundException(RESOURCE_NAME_LOAN));
     }
 
     @RequestMapping(
@@ -147,7 +148,7 @@ public class LoanController {
 
         int forbiddenRequestTime = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
         if ((loan.getAmount() >= MyAppConstants.MAX_LOAN_AMOUNT) &&
-                loanService.between(forbiddenRequestTime,
+                loanService.isNumberBetween(forbiddenRequestTime,
                 MyAppConstants.FORBIDDEN_HOUR_MIN,
                 MyAppConstants.FORBIDDEN_HOUR_MAX)) {
             throw new ForbiddenRequestHoursException(

@@ -8,9 +8,9 @@ public final class MyAppConstants {
     public static final String STATUS_APPROVED = "APPROVED";
     public static final String STATUS_CLOSED = "CLOSED";
 
-    public static final Double STANDARD_INTEREST_FACTOR = 0.1429;
-    public static final Double EXTENDED_INTEREST_FACTOR = 0.2149;
-    public static final Double OVERDUE_INTEREST_FACTOR = 0.4286;
+    public static final Double STANDARD_INTEREST_FACTOR = 1d / 7;
+    public static final Double EXTENDED_INTEREST_FACTOR = 1.5 / 7;
+    public static final Double OVERDUE_INTEREST_FACTOR = 3d / 7;
 
     public static final long MAX_LOAN_AMOUNT = 5000;
     public static final long MAX_LOAN_TERM_IN_DAYS = 30 * 12;

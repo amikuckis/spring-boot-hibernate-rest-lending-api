@@ -10,6 +10,8 @@ public class LoanInfo {
 
     private Double loanAmount;
 
+    private Double interestAmount;
+
     private Double totalInterestAmount;
 
     private Double amountToReturn;
@@ -44,6 +46,14 @@ public class LoanInfo {
 
     public void setLoanAmount(Double loanAmount) {
         this.loanAmount = loanAmount;
+    }
+
+    public Double getInterestAmount() {
+        return interestAmount;
+    }
+
+    public void setInterestAmount(Double interestAmount) {
+        this.interestAmount = interestAmount;
     }
 
     public Double getTotalInterestAmount() {

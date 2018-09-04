@@ -6,7 +6,7 @@ public class ExtendedLoanInfo {
 
     private Date loanEndDate;
 
-    private Double totalInterestAmount;
+    private Double interestAmount;
 
     private String status;
 
@@ -18,12 +18,12 @@ public class ExtendedLoanInfo {
         this.loanEndDate = loanEndDate;
     }
 
-    public Double getTotalInterestAmount() {
-        return totalInterestAmount;
+    public Double getInterestAmount() {
+        return interestAmount;
     }
 
-    public void setTotalInterestAmount(Double totalInterestAmount) {
-        this.totalInterestAmount = totalInterestAmount;
+    public void setInterestAmount(Double interestAmount) {
+        this.interestAmount = interestAmount;
     }
 
     public String getStatus() {

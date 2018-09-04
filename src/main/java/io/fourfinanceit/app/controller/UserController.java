@@ -2,7 +2,6 @@ package io.fourfinanceit.app.controller;
 
 import io.fourfinanceit.app.exception.ResourceNotFoundException;
 import io.fourfinanceit.app.exception.UserAlreadyExistsException;
-import io.fourfinanceit.app.model.UserLoginForm;
 import io.fourfinanceit.app.model.domain.User;
 import io.fourfinanceit.app.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,14 +11,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/user")
 public class UserController {
 
     @Autowired
-    UserService userService;
+    private UserService userService;
 
     @RequestMapping(
             value = "/{userId}",

@@ -12,16 +12,16 @@ import java.util.List;
 public class LoggedRemoteAddressOfRequestService {
 
     @Autowired
-    LoggedRemoteAddressOfRequestRepository loggedRemoteAddressOfRequestRepository;
+    private LoggedRemoteAddressOfRequestRepository loggedRemoteAddressOfRequestRepository;
 
     public void deleteLoggedRemoteAddresses(Timestamp deleteBefore) {
         loggedRemoteAddressOfRequestRepository.deleteByCreatedAtBefore(deleteBefore);
     }
 
     public boolean checkIfRequestLimitForRemoteAddressExceeded(String remoteAddress,
-                                                                  List<String> requestedEndpoints,
-                                                                  int hourLimit,
-                                                                  int requestLimit) {
+                                                               List<String> requestedEndpoints,
+                                                               int hourLimit,
+                                                               int requestLimit) {
 
         Timestamp checkStartTimestamp = new Timestamp(System.currentTimeMillis() - (hourLimit));
 
@@ -35,9 +35,7 @@ public class LoggedRemoteAddressOfRequestService {
         return resultSize >= requestLimit;
     }
 
-    public void logRequestRemoteAddress(
-            String remoteAddress,
-            String requestedEndpoint) {
+    public void logRequestRemoteAddress(String remoteAddress, String requestedEndpoint) {
 
         LoggedRemoteAddressOfRequest address = new LoggedRemoteAddressOfRequest();
         address.setRemoteAddress(remoteAddress);
